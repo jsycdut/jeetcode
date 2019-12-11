@@ -10,7 +10,7 @@ I :heart: leetcode
 * [leetcode-cli](https://github.com/skygragon/leetcode-cli)
 * [vscode-leetcode](https://github.com/jdneo/vscode-leetcode)
 
-项目名jeetcode意为java + leetcode，目的为使用java，编写一个命令行工具，用于在命令行中享受leetcode刷题的乐趣。
+项目名jeetcode意为java + leetcode，目的为使用java，编写一个REPL(Read-Eval-Print Loop)命令行工具，用于在命令行中享受leetcode刷题的乐趣。
 
 ## 功能列表以及完成进度
 

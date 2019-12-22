@@ -1,0 +1,5 @@
+{
+  "operationName": "fetchAllLeetcodeTemplates",
+  "variables": {},
+  "query": "query fetchAllLeetcodeTemplates {\n  allLeetcodePlaygroundTemplates {\n    templateId\n    name\n    nameSlug\n    __typename\n  }\n}\n"
+}

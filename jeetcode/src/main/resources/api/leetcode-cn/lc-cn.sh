@@ -16,7 +16,7 @@ post_json="-X POST -H Content-Type: application/json -d"
 curl -s -L -e $main $ -c first-visit-cookie https://leetcoe-cn.com/graphql
 
 # login
-#curl -i -L -e $login -b first-visit-cookie -c login-cookie -X POST -d "csrfmiddlewaretoke="$token"&login="user_name"&password="$password"&next=/problems/all" $login
+#curl -i -L -e $login -b first-visit-cookie -c login-cookie -X POST -d "csrfmiddlewaretoken="$token"&login="user_name"&password="$password"&next=/problems/all" $login
 
 # user stat
 # curl -L -e $login $cookie $post_json @get-user-stat.json $query > user-stat.json

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# echo "**********   **********"
 if [[ ! -f corlorful-output.sh ]]; then
   curl -o corlorful-output.sh https://raw.githubusercontent.com/jsycdut/scripts/master/shell/corlorful-output.sh
 fi
@@ -62,6 +61,7 @@ token=`grep csrftoken cookie | awk '{print $7}'`
 
 if [[ -z $token ]]; then
   error_prompt "No csrftoken field found in cookie file."
+  exit -1
 else
   info_prompt "csrftoken $token "
 fi

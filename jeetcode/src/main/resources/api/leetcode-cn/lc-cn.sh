@@ -1,6 +1,12 @@
 #!/bin/bash
 
 # echo "**********   **********"
+if [[ ! -f corlorful-output.sh ]]; then
+  curl -o corlorful-output.sh https://raw.githubusercontent.com/jsycdut/scripts/master/shell/corlorful-output.sh
+fi
+
+# get colorful output functions
+source corlorful-output.sh
 
 # url shorthand
 login_url="https://leetcode-cn.com/accounts/login/"
@@ -29,34 +35,50 @@ done < auth
 
 # check
 if [[ -z $user_name ]]; then
-  echo error! empty user name.
+  error_prompt error! empty user name.
   exit -1
 fi
 
 if [[ -z $password ]]; then
-  echo error! empty password.
+  error_prompt error! empty password.
   exit -1
 fi
 
-echo "********** Login Information:  $user_name $password "
+info_prompt "Login Information: user: $user_name password: $password "
 
 # get cookie
 
-curl -s -c cookie $query_url > /dev/null
+curl -c cookie $query_url > /dev/null
 
 if [[ ! -f cookie ]]; then
-  echo "********** error! $query_url doesn not set cookie. **********"
+  error_prompt "$query_url doesn not set cookie."
   exit -1
 else
-  echo "********** Cookie"
+  info_prompt " Cookie"
   cat cookie
 fi
 
-# login
-#curl -i -L -e $login $use_cookie $post_form -d "csrfmiddlewaretoken="$token"&login="user_name"&password="$password"&next=/problems/all" $login_url
+token=`grep csrftoken cookie | awk '{print $7}'`
+
+if [[ -z $token ]]; then
+  error_prompt "No csrftoken field found in cookie file."
+else
+  info_prompt "csrftoken $token "
+fi
+
+# login by user_name and password
+curl -i -L -e $login_url $use_cookie $post_form -d "csrfmiddlewaretoken=$token&login=$user_name&password=$password&next=/problems/all" $login_url > /dev/null
+
+session=`grep LEETCODE_SESSION cookie`
+
+if [[ -n $session ]]; then
+  info_prompt Login as $user_name successfully.
+else
+  error_prompt Login failed.
+fi
 
 # user stat
-# curl -L -e $login $use_cookie $post_json @get-user-stat.json $query > user-stat.json
+# curl -i -L -e $login $use_cookie $post_json @get-user-stat.json $query > user-stat.json
 
 
 # submissions

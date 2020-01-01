@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 if [[ ! -f corlorful-output.sh ]]; then
   curl -o corlorful-output.sh https://raw.githubusercontent.com/jsycdut/scripts/master/shell/corlorful-output.sh
 fi
@@ -26,29 +24,27 @@ post_json="-X POST -H Content-Type:application/json -d"
 post_form="-X POST"
 
 # read user name and password
-while IFS= read -r line; do
-  if [[ $line =~ ^user ]]; then
-    user_name=${line:10}
-  else
-    password=${line:9}
-  fi
-done < auth
-
-# check
-if [[ -z $user_name ]]; then
-  error_prompt error! empty user name.
-  exit -1
-fi
-
-if [[ -z $password ]]; then
-  error_prompt error! empty password.
-  exit -1
+if [[ -f auth ]]; then
+  while IFS= read -r line; do
+    if [[ $line =~ ^user ]]; then
+      user_name=${line:10}
+    else
+      password=${line:9}
+    fi
+  done < auth
+else
+  read -p "your leetcode-cn account: " user_name
+  read -s -p "your password: " password
+  printf "\n"
+  cat << EOF >> auth
+user_name=$user_name
+password=$password
+EOF
 fi
 
 info_prompt "Login Information: user: $user_name password: $password "
 
 # get cookie
-
 curl -c cookie $query_url > /dev/null
 
 if [[ ! -f cookie ]]; then
@@ -91,11 +87,12 @@ if [[ -n $session ]]; then
   fi
 else
   error_prompt Login failed.
+  exit -1
 fi
 
 # get two-sum problem detail
 curl -s -L -e $two_sum_url $post_json @../../json/fetch_problem.json $query_url | python -m json.tool > two_sum.json
-content=`grep -i content two_sum.json | grep -i -v translatedcontent | sed 's/<[^>]*>//g;s/content/two-sum-content/'`
+content=`grep -i content two_sum.json | grep -i -v translatedcontent | sed 's/<[^>]*>//g;s/content/two-sum/'`
 
 if [[ -n $content ]]; then
   info_prompt $content

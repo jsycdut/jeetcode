@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [[ ! -f corlorful-output.sh ]]; then
   curl -o corlorful-output.sh https://raw.githubusercontent.com/jsycdut/scripts/master/shell/corlorful-output.sh
 fi
@@ -20,7 +22,7 @@ token=""
 
 # curl parameters shorthand
 use_cookie="-b cookie -c cookie"
-post_json="-X POST -H Content-Type: application/json -d"
+post_json="-X POST -H Content-Type:application/json -d"
 post_form="-X POST"
 
 # read user name and password
@@ -73,15 +75,21 @@ session=`grep LEETCODE_SESSION cookie`
 
 if [[ -n $session ]]; then
   info_prompt Login as $user_name successfully.
+
+  # user stat detail
+  curl -s -L -e $login_url $use_cookie $post_json @../../json/fetch_global_data.json $query_url > tmp.json
+  if `command -v python > /dev/null 2>&1`; then
+    info_prompt "python found, now using python -m json.tool to format user_stat.json"
+    cat tmp.json | python -m json.tool > user_stat.json
+    username=`grep -i username user_stat.json | sed 's/[ ,"]//g'`
+    realName=`grep -i realname user_stat.json | sed 's/[ ,"]//g'`
+    info_prompt  'leetcode-cn.com login detail =>' $username $realName
+    rm tmp.json
+  else
+    mv tmp.json user_stat.json
+    error_prompt "no python found in environment, user_stat.json stay un-formatted"
+  fi
 else
   error_prompt Login failed.
 fi
 
-# user stat
-# curl -i -L -e $login $use_cookie $post_json @get-user-stat.json $query > user-stat.json
-
-
-# submissions
-# curl -L -e $login $cookie $post_json @get-submissions.json $query > get_submissions.json
-
-# get specific submission-code

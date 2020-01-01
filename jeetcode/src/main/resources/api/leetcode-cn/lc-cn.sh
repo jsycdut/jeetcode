@@ -68,27 +68,22 @@ fi
 curl -i -L -e $login_url $use_cookie $post_form -d "csrfmiddlewaretoken=$token&login=$user_name&password=$password&next=/problems/all" $login_url > /dev/null
 
 session=`grep LEETCODE_SESSION cookie`
-
-if [[ -n $session ]]; then
-  info_prompt Login as $user_name successfully.
-
-  # user stat detail
-  curl -s -L -e $login_url $use_cookie $post_json @../../json/fetch_global_data.json $query_url > tmp.json
-  if `command -v python > /dev/null 2>&1`; then
-    info_prompt "python found, now using python -m json.tool to format user_stat.json"
-    cat tmp.json | python -m json.tool > user_stat.json
-    username=`grep -i username user_stat.json | sed 's/[ ,"]//g'`
-    realName=`grep -i realname user_stat.json | sed 's/[ ,"]//g'`
-    info_prompt  'leetcode-cn.com login detail =>' $username $realName
-    rm tmp.json
-  else
-    mv tmp.json user_stat.json
-    error_prompt "no python found in environment, user_stat.json stay un-formatted"
-  fi
-else
-  error_prompt Login failed.
+if [[ -z $session ]]; then
+  error_prompt "Login failed."
   exit -1
 fi
+
+if ! command -v python > /dev/null 2>&1; then
+  error_prompt "We need python for manipulating json, please install python for further process"
+  exit -1
+fi
+
+# user stat detail
+curl -s -L -e $login_url $use_cookie $post_json @../../json/fetch_global_data.json $query_url | python -m json.tool > user_stat.json
+
+username=`grep -i username user_stat.json | sed 's/[ ,"]//g'`
+realName=`grep -i realname user_stat.json | sed 's/[ ,"]//g'`
+info_prompt  'leetcode-cn.com login detail =>' $username $realName
 
 # get two-sum problem detail
 curl -s -L -e $two_sum_url $post_json @../../json/fetch_problem.json $query_url | python -m json.tool > two_sum.json
@@ -96,4 +91,11 @@ content=`grep -i content two_sum.json | grep -i -v translatedcontent | sed 's/<[
 
 if [[ -n $content ]]; then
   info_prompt $content
+else
+  error_prompt "Can not find content field in two_sum.json, check it manually"
 fi
+
+# get all problems
+curl -L -e $two_sum_url $use_cookie $post_json @../../json/fetch_all_questions.json $query_url | python -m json.tool > all_leetcode_problems.json
+
+info_prompt "All problems downloaded as all_leetcode_problems.json, check it now."

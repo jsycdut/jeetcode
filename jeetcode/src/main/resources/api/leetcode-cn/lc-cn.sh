@@ -93,3 +93,10 @@ else
   error_prompt Login failed.
 fi
 
+# get two-sum problem detail
+curl -s -L -e $two_sum_url $post_json @../../json/fetch_problem.json $query_url | python -m json.tool > two_sum.json
+content=`grep -i content two_sum.json | grep -i -v translatedcontent | sed 's/<[^>]*>//g;s/content/two-sum-content/'`
+
+if [[ -n $content ]]; then
+  info_prompt $content
+fi

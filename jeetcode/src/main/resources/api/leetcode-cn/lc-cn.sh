@@ -20,33 +20,31 @@ token=""
 
 # curl parameters shorthand
 use_cookie="-b cookie -c cookie"
-post_json="-X POST -H Content-Type: application/json -d"
+post_json="-X POST -H Content-Type:application/json -d"
 post_form="-X POST"
 
 # read user name and password
-while IFS= read -r line; do
-  if [[ $line =~ ^user ]]; then
-    user_name=${line:10}
-  else
-    password=${line:9}
-  fi
-done < auth
-
-# check
-if [[ -z $user_name ]]; then
-  error_prompt error! empty user name.
-  exit -1
-fi
-
-if [[ -z $password ]]; then
-  error_prompt error! empty password.
-  exit -1
+if [[ -f auth ]]; then
+  while IFS= read -r line; do
+    if [[ $line =~ ^user ]]; then
+      user_name=${line:10}
+    else
+      password=${line:9}
+    fi
+  done < auth
+else
+  read -p "your leetcode-cn account: " user_name
+  read -s -p "your password: " password
+  printf "\n"
+  cat << EOF >> auth
+user_name=$user_name
+password=$password
+EOF
 fi
 
 info_prompt "Login Information: user: $user_name password: $password "
 
 # get cookie
-
 curl -c cookie $query_url > /dev/null
 
 if [[ ! -f cookie ]]; then
@@ -70,18 +68,34 @@ fi
 curl -i -L -e $login_url $use_cookie $post_form -d "csrfmiddlewaretoken=$token&login=$user_name&password=$password&next=/problems/all" $login_url > /dev/null
 
 session=`grep LEETCODE_SESSION cookie`
-
-if [[ -n $session ]]; then
-  info_prompt Login as $user_name successfully.
-else
-  error_prompt Login failed.
+if [[ -z $session ]]; then
+  error_prompt "Login failed."
+  exit -1
 fi
 
-# user stat
-# curl -i -L -e $login $use_cookie $post_json @get-user-stat.json $query > user-stat.json
+if ! command -v python > /dev/null 2>&1; then
+  error_prompt "We need python for manipulating json, please install python for further process"
+  exit -1
+fi
 
+# user stat detail
+curl -s -L -e $login_url $use_cookie $post_json @../../json/fetch_global_data.json $query_url | python -m json.tool > user_stat.json
 
-# submissions
-# curl -L -e $login $cookie $post_json @get-submissions.json $query > get_submissions.json
+username=`grep -i username user_stat.json | sed 's/[ ,"]//g'`
+realName=`grep -i realname user_stat.json | sed 's/[ ,"]//g'`
+info_prompt  'leetcode-cn.com login detail =>' $username $realName
 
-# get specific submission-code
+# get two-sum problem detail
+curl -s -L -e $two_sum_url $post_json @../../json/fetch_problem.json $query_url | python -m json.tool > two_sum.json
+content=`grep -i \"content\" two_sum.json| sed 's/<[^>]*>//g;s/content/two-sum/'`
+
+if [[ -n $content ]]; then
+  info_prompt $content
+else
+  error_prompt "Can not find content field in two_sum.json, check it manually"
+fi
+
+# get all problems
+curl -L -e $two_sum_url $use_cookie $post_json @../../json/fetch_all_questions.json $query_url | python -m json.tool > all_leetcode_problems.json
+
+info_prompt "All problems downloaded as all_leetcode_problems.json, check it now."
